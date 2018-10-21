@@ -179,20 +179,22 @@ DOMDisplay.prototype.scrollPlayerIntoView = function(state){
     let player = state.player;
     let center = player.pos.plus(player.size.times(0.5)).times(scale);
 
-    if(center < left+margin){
+    if(center.x < left+margin){
         this.dom.scrollLeft = center.x - margin;
     }
-    else if (center > right-margin) {
+    else if (center.x > right-margin) {
         this.dom.scrollLeft = center.x + margin - width;
     }
 
-    if(center < top+margin){
+    if(center.y < top+margin){
         this.dom.scrollTop = center.y - margin;
     }
-    else if ( center > bottom-margin){
+    else if ( center.y > bottom-margin){
         this.dom.scrollTop = center.y + margin - height;
     }
 };
+
+
 
 //      MOTION and COLLISIONS
 
