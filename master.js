@@ -70,7 +70,18 @@ class Monster {
         return "monster";
     }
     static create(pos){
-        return new Monster(pos, new Vec(2, 0));
+        let direction = (Math.random()-0.6)*20;
+        return new Monster(pos, new Vec(direction, 0));
+    }
+
+    collide(state) {
+        let player = state.player;
+        if (player.pos.y + player.size.y < this.pos.y + 0.5) {
+            let filtered = state.actors.filter(a => a != this);
+            return new State(state.level, filtered, state.status);
+        } else {
+            return new State(state.level, state.actors, "lost");
+        }
     }
 
 }
@@ -171,7 +182,11 @@ function drawGrid(level) {
 
 function drawActors(actors) {
     return elt("div", {}, ...actors.map(actor => {
-        let rect = elt("div", {class: `actor ${actor.type}`}); rect.style.width = `${actor.size.x * scale}px`; rect.style.height = `${actor.size.y * scale}px`; rect.style.left = `${actor.pos.x * scale}px`; rect.style.top = `${actor.pos.y * scale}px`;
+        let rect = elt("div", {class: `actor ${actor.type}`});
+        rect.style.width = `${actor.size.x * scale}px`;
+        rect.style.height = `${actor.size.y * scale}px`;
+        rect.style.left = `${actor.pos.x * scale}px`;
+        rect.style.top = `${actor.pos.y * scale}px`;
         return rect;
     }));
 }
@@ -233,6 +248,7 @@ Level.prototype.touches = function(pos, size, type){ //changed var to let
 };
 
 
+
 State.prototype.update = function(time, keys){
     let actors = this.actors.map(actor => actor.update(time, this, keys)); //3 args cause it's actor's method
     let newState = new State(this.level, actors,this.status);
@@ -259,6 +275,21 @@ function overlap(actor1, actor2){
         actor1.pos.y < actor2.pos.y + actor2.size.y;
 }
 
+function fromTop(actor1, actor2){
+    return (actor1.pos.x + actor1.size.x/2) - (actor2.pos.x + actor2.size.x/2) < 0.4 &&
+        actor1.pos.y + actor1.size.y - actor2.pos.y < 0.2
+}
+
+Monster.prototype.collide = function(state){
+    let player = state.player;
+    if (player.pos.y + player.size.y < this.pos.y + 0.5) {
+        let filtered = state.actors.filter(a => a != this);
+        return new State(state.level, filtered, state.status);
+    } else {
+        return new State(state.level, state.actors, "lost");
+    }
+};
+
 Lava.prototype.collide = function(state) {
     return new State(state.level, state.actors, "lost");
 };
@@ -282,6 +313,16 @@ Lava.prototype.update = function(time, state){
     }
     else {
         return new Lava(this.pos, this.speed.times(-1));
+    }
+};
+
+Monster.prototype.update = function(time, state){
+    let newPos = this.pos.plus(this.speed.times(time));
+    if(!state.level.touches(newPos, this.size, "wall")){
+        return new Monster(newPos, this.speed, this.reset);
+    }
+    else {
+        return new Monster(this.pos, this.speed.times(-1));
     }
 };
 
